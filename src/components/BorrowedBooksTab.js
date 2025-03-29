@@ -4,6 +4,14 @@ import '../css/BorrowedBooksTab.css';
 
 const BorrowedBooksTab = ({ customer }) => {
     const [borrowedBooks, setBorrowedBooks] = useState([]);
+    const [bookUID, setBookUID] = useState('');
+
+    
+    useEffect(() => {
+        if (customer) {
+            fetchBorrowedBooks();
+        }
+    }, [customer]);
 
     const fetchBorrowedBooks = async () => {
         try {
@@ -30,31 +38,55 @@ const BorrowedBooksTab = ({ customer }) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    bookUID: bookUID,
+                    bookUniqueId: bookUID,
                     customerPassport: customer.passport
                 })
             });
-            
-            if (response.ok) {
-                // Remove the returned book from the state
-                setBorrowedBooks(prevBooks => 
-                    prevBooks.filter(book => book.bookUID !== bookUID)
-                );
-            }
+            fetchBorrowedBooks();
         } catch (error) {
             console.error('Error returning book:', error);
         }
     };
 
-    useEffect(() => {
-        if (customer) {
+    const handleBorrowBook = async (e) => {
+        e.preventDefault();
+        if (!bookUID.trim()) return;
+
+        try {
+            const response = await fetch(`${config.api.baseURL}/BorrowedBook/borrow`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    bookUniqueId: bookUID,
+                    customerPassport: customer.passport
+                })
+            });
             fetchBorrowedBooks();
+            setBookUID('');
+        } catch (error) {
+            console.error('Error borrowing book:', error);
         }
-    }, [customer]);
+    };
 
     return (
         <div className="borrowed-books-container">
             <h3>Borrowed Books</h3>
+            
+            <form onSubmit={handleBorrowBook} className="borrow-form">
+                <input
+                    type="text"
+                    value={bookUID}
+                    onChange={(e) => setBookUID(e.target.value)}
+                    placeholder="Enter Book UID..."
+                    className="borrow-input"
+                />
+                <button type="submit" className="borrow-button">
+                    Borrow Book
+                </button>
+            </form>
+
             {borrowedBooks.length > 0 ? (
                 <table className="borrowed-books-table">
                     <thead>
