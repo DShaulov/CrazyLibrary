@@ -13,6 +13,11 @@ const CustomersTab = () => {
   const handleSearchChange = async (e) => {
     setSearchQuery(e.target.value)
     console.log(searchQuery);
+    if (e.target.value.length === 0) {
+      setCustomerMatches([]);
+      setShowDropdown(false);
+      return;
+    }
     try {
       const parsedQuery = parseSearchQuery(e.target.value);
       const response = await fetch(`${config.api.baseURL}/CustomerSearch`, {
@@ -22,6 +27,13 @@ const CustomersTab = () => {
         },
         body: JSON.stringify(parsedQuery)
       });
+
+      if (response.status === 404) {
+        setCustomerMatches([]);
+        setShowDropdown(false);
+        return;
+      }
+
       const data = await response.json();
       console.log(data);
       setCustomerMatches(data);
