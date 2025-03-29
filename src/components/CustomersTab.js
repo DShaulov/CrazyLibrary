@@ -15,6 +15,7 @@ const CustomersTab = () => {
     console.log(searchQuery);
     if (e.target.value.length === 0) {
       setCustomerMatches([]);
+      setSelectedCustomer(null);
       setShowDropdown(false);
       return;
     }
@@ -30,6 +31,7 @@ const CustomersTab = () => {
 
       if (response.status === 404) {
         setCustomerMatches([]);
+        setSelectedCustomer(null);
         setShowDropdown(false);
         return;
       }
@@ -124,9 +126,10 @@ const CustomersTab = () => {
           </div>
         )}
       </div>
-      <div className="customer-details">
-        <h3>Customer Information</h3>
-        <div className="customer-info">
+      {selectedCustomer && (
+        <div className="customer-details">
+          <h3>Customer Information</h3>
+          <div className="customer-info">
           <div className="info-row">
             <label>Name:</label>
             <span>{selectedCustomer ? selectedCustomer.firstName : '—'}</span>
@@ -152,10 +155,11 @@ const CustomersTab = () => {
           <div className="info-row">
             <label>Address:</label>
             <span>{selectedCustomer ? selectedCustomer.address : '—'}</span>
+            </div>
           </div>
+          <BorrowedBooksTab customer={selectedCustomer}/>
         </div>
-        <BorrowedBooksTab customer={selectedCustomer}/>
-      </div>
+      )}
     </div>
   );
 };
