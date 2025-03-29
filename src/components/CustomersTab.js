@@ -6,9 +6,63 @@ import BorrowedBooksTab from './BorrowedBooksTab';
 const CustomersTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerMatches, setCustomerMatches] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
+  const handleSearchChange = async (e) => {
+    setSearchQuery(e.target.value)
+    console.log(searchQuery);
+    try {
+      const response = await fetch(``);
+      const data = await response.json();
+      setCustomerMatches(data);
+      setShowDropdown(true);
+    } catch (error) {
+      console.error('Error searching for customers:', error);
+      setCustomerMatches([]);
+    }
+  };
+
+  const parseSearchQuery = (queryString) => {
+    const result = {
+      firstName: '',
+      lastName: '',
+      phone: '',
+      passport: ''
+    };
+    
+    if (!queryString || queryString.trim() === '') {
+      return result;
+    }
+    
+    // Split the query string into individual parts
+    const parts = queryString.trim().split(/\s+/);
+    
+    // Process each part of the query
+    parts.forEach(part => {
+      // Check if it's a number
+      if (/^\d+$/.test(part)) {
+        if (part.startsWith('0')) {
+          result.phone = part;
+        } 
+        else {
+          result.passport = part;
+        }
+      }
+      // Otherwise, it's part of a name
+      else {
+        // If firstName is empty, assign it there
+        if (!result.firstName) {
+          result.firstName = part;
+        }
+        else {
+          result.lastName = part;
+        }
+      }
+    });
+    
+    return result;
+
   };
 
   const handleSearchSubmit = (e) => {
