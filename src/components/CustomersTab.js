@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import '../css/CustomersTab.css';
 import BorrowedBooksTab from './BorrowedBooksTab';
+import config from '../config';
 
 
 const CustomersTab = () => {
@@ -13,8 +14,16 @@ const CustomersTab = () => {
     setSearchQuery(e.target.value)
     console.log(searchQuery);
     try {
-      const response = await fetch(``);
+      const parsedQuery = parseSearchQuery(e.target.value);
+      const response = await fetch(`${config.api.baseURL}/CustomerSearch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(parsedQuery)
+      });
       const data = await response.json();
+      console.log(data);
       setCustomerMatches(data);
       setShowDropdown(true);
     } catch (error) {
@@ -40,13 +49,13 @@ const CustomersTab = () => {
     
     // Process each part of the query
     parts.forEach(part => {
-      // Check if it's a number
-      if (/^\d+$/.test(part)) {
-        if (part.startsWith('0')) {
-          result.phone = part;
+      // Check if it's a number or a string containing only numbers
+      if (/^\d+$/.test(part.toString())) {
+        if (part.toString().startsWith('0')) {
+          result.phone = part.toString();
         } 
         else {
-          result.passport = part;
+          result.passport = part.toString();
         }
       }
       // Otherwise, it's part of a name
@@ -62,7 +71,6 @@ const CustomersTab = () => {
     });
     
     return result;
-
   };
 
   const handleSearchSubmit = (e) => {
@@ -83,13 +91,37 @@ const CustomersTab = () => {
           />
           <button type="submit" className="search-button">Search</button>
         </form>
+        
+        {showDropdown && customerMatches.length > 0 && (
+          <div className="search-dropdown">
+            {/* Displays the first X results, where X is defined in config.search.resultDisplayNum */}
+            {customerMatches.slice(0, config.search.resultDisplayNum).map((customer) => (
+              <div 
+                key={customer.passport} 
+                className="dropdown-item"
+                onClick={() => {
+                  setSelectedCustomer(customer);
+                  setShowDropdown(false);
+                }}
+              >
+                <span className="customer-name">
+                  {customer.firstName} {customer.lastName}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className="customer-details">
         <h3>Customer Information</h3>
         <div className="customer-info">
           <div className="info-row">
             <label>Name:</label>
-            <span>{selectedCustomer ? selectedCustomer.name : '—'}</span>
+            <span>{selectedCustomer ? selectedCustomer.firstName : '—'}</span>
+          </div>
+          <div className="info-row">
+            <label>Last Name:</label>
+            <span>{selectedCustomer ? selectedCustomer.lastName : '—'}</span>
           </div>
           <div className="info-row">
             <label>Email:</label>
@@ -97,14 +129,20 @@ const CustomersTab = () => {
           </div>
           <div className="info-row">
             <label>Date of Birth:</label>
-            <span>{selectedCustomer ? selectedCustomer.dob : '—'}</span>
+            <span>
+              {/* Strip the time from the date */} 
+              {selectedCustomer 
+                ? new Date(selectedCustomer.birthDate).toLocaleDateString('en-GB')
+                : '—'
+              }
+            </span>
           </div>
           <div className="info-row">
             <label>Address:</label>
             <span>{selectedCustomer ? selectedCustomer.address : '—'}</span>
           </div>
         </div>
-        <BorrowedBooksTab/>
+        <BorrowedBooksTab customer={selectedCustomer}/>
       </div>
     </div>
   );
